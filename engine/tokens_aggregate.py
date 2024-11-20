@@ -8,13 +8,13 @@ class TokenAggregate:
         spacy_token: str,
         clean_model_tokens: list[str],
         dirty_model_tokens: list[str],
-        is_spacy_NER: bool,
+        NER: str,
         model_exp: list[float]
     ) ->None:
         self.spacy_token = spacy_token
         self.clean_model_tokens = clean_model_tokens
         self.dirty_model_tokens = dirty_model_tokens
-        self.is_spacy_NER = is_spacy_NER
+        self.NER = NER
         self.model_exp = model_exp
         
     @staticmethod
@@ -27,7 +27,7 @@ class TokenAggregate:
         spacy_token_to_our_tokens = []
 
         spacy_tokens = []
-        spacy_is_NER = []
+        NER = []
 
         current_clear_token = 0
         current_spacy_token = 0
@@ -40,7 +40,7 @@ class TokenAggregate:
 
         for spacy_token in doc:
             spacy_tokens.append(spacy_token.text)
-            spacy_is_NER.append(spacy_token.ent_type_ != '')
+            NER.append(spacy_token.ent_type_)
 
         for token in tokens_clear:
 
@@ -57,7 +57,7 @@ class TokenAggregate:
                     spacy_tokens[current_spacy_token],
                     clean_tokens_for_current_spacy_token,
                     dirty_tokens_for_current_spacy_token,
-                    spacy_is_NER[current_spacy_token],
+                    NER[current_spacy_token],
                     model_token_exp
                     )
                 spacy_token_to_our_tokens.append(new_aggregate)
