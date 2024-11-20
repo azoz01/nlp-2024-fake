@@ -1,3 +1,4 @@
+import spacy
 class token_aggregate:
     def __init__(
         self,
@@ -46,7 +47,7 @@ def generate_aggregate_list(doc,exp_tensor,tokens_clear,tokens_dirty):
         clean_tokens_for_current_spacy_token.append(token)
         #weird shift
         dirty_tokens_for_current_spacy_token.append(tokens_dirty[current_clear_token+1])
-        model_token_exp.append(exp_tensor[0,1,current_clear_token+1])
+        model_token_exp.append(exp_tensor[0,0,current_clear_token+1])
 
         if(constructed_token == spacy_tokens[current_spacy_token]):
 
@@ -66,4 +67,20 @@ def generate_aggregate_list(doc,exp_tensor,tokens_clear,tokens_dirty):
             dirty_tokens_for_current_spacy_token = []
             model_token_exp = []
         current_clear_token = current_clear_token+1
+
+
+    #debug!!!
+    if(current_spacy_token != len(spacy_tokens)):
+        print(f"\n INVALID DOC!!! stopped at {spacy_tokens[current_spacy_token]}\n")
+        print(f"{constructed_token}")
+        print(f"spacy tokens left: {spacy_tokens[current_spacy_token:]}")
+        print(f"model tokens left: {tokens_clear[sum([len(x.get_model_tokens()[0]) for x in spacy_token_to_our_tokens]):]}")
+        for token in doc:
+            if token.ent_type_:
+                print(f"Token: {token.text} True")
+            else:
+                print(f"Token: {token.text} False")
+
+
+    
     return spacy_token_to_our_tokens
