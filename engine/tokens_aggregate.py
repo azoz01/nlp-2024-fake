@@ -67,7 +67,7 @@ class TokenAggregate:
                 constructed_model_token += tokens_clear[current_clear_token_id]
                 clean_tokens_for_current_spacy_tokens.append(tokens_clear[current_clear_token_id])
                 dirty_tokens_for_current_spacy_tokens.append(tokens_dirty[current_clear_token_id+1])
-                model_token_exp.append(float(exp_tensor[0,0,current_clear_token_id+1]))
+                model_token_exp.append(float(exp_tensor[0,current_clear_token_id+1]))
                 current_clear_token_id +=1
             else:
                 if(current_spacy_token_id == len(spacy_tokens)):
