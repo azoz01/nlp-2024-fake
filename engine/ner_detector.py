@@ -21,6 +21,7 @@ def tokenize_evaluate_and_detect_NERs(
     text: list[str],
     spacy_model: str = "en_core_web_sm",
     model_token_cleaner_function=clear_tokens_from_model,
+    return_clear_tokens: bool = False,
 ) -> list[tuple[str, int, str]]:
     # token, exp , Ner type
     aggregates = generate_aggregates(
@@ -29,7 +30,7 @@ def tokenize_evaluate_and_detect_NERs(
 
     token_exp_NER = []
     for aggregate in tqdm(aggregates):
-        token_exp_NER += transform_aggregate_into_mapping(aggregate)
+        token_exp_NER += transform_aggregate_into_mapping(aggregate, return_clear_tokens)
     return token_exp_NER
 
 
@@ -80,10 +81,12 @@ def generate_aggregates(
 
 def transform_aggregate_into_mapping(
     aggregate: TokenAggregate,
-) -> list[(str, float, str)]:
-    list_: list[(str, float, str)] = []
+    take_clear_tokens: bool = False,
+) -> list[tuple[str, int, str]]:
+    list_: list[tuple[str, int, str]] = []
     NER = find_NER_name_for_aggregate(aggregate.NERs)
-    for id, token in enumerate(aggregate.dirty_model_tokens):
+    tokens = aggregate.get_tokens(get_clear=take_clear_tokens)
+    for id, token in enumerate(tokens):
         element = (token, aggregate.model_exp[id], NER)
         list_.append(element)
     return list_

@@ -25,6 +25,12 @@ class TokenAggregate:
             f"Our model dirty: {self.dirty_model_tokens}\n"
             f"model exp: {self.model_exp}\n"
         )
+    
+    def get_tokens(self, get_clear:bool = False) -> list[str]:
+        if get_clear:
+            return self.clean_model_tokens
+        else:
+            return self.dirty_model_tokens
 
     @staticmethod
     def generate_aggregate_list(
