@@ -17,6 +17,7 @@ def tokenize_evaluate_and_detect_NERs(
         spacy_model: str = "en_core_web_sm",
         model_token_cleaner_function = clear_tokens_from_model,
         ) -> list[tuple(str, int, str)]:
+    #token, exp , Ner type
     aggregates = generate_aggregates(pipeline,text,spacy_model,model_token_cleaner_function)
 
     token_exp_NER = []
@@ -80,7 +81,7 @@ def find_NER_name_for_aggregate(NERs: list[str])->str:
     if not unique_NERs:
         return NO_NER_SYMBOL
     elif len(unique_NERs) != 1:
-        print(f"EHHH BAD ASUMOTINS: {unique_NERs}")
+        print(f"EHHH BAD ASU MOTINS: {unique_NERs}")
     return unique_NERs.pop()
 
 def tokenize_using_cpu(
