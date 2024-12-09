@@ -2,7 +2,6 @@ import spacy
 import torch
 from tqdm import tqdm
 from transformers import TextClassificationPipeline
-
 from engine.tokens_aggregate import TokenAggregate
 from engine.xai import FeatureAblationText
 
@@ -22,16 +21,63 @@ def tokenize_evaluate_and_detect_NERs(
     spacy_model: str = "en_core_web_sm",
     model_token_cleaner_function=clear_tokens_from_model,
     return_clear_tokens: bool = False,
+    ners_to_calculate_ablation: list[str] = None
 ) -> list[tuple[str, int, str]]:
     # token, exp , Ner type
+    masks = None
+    if ners_to_calculate_ablation:
+        masks = generate_masks(pipeline,text,spacy_model,model_token_cleaner_function,clear_tokens_from_model,ners_to_calculate_ablation=ners_to_calculate_ablation)
+
     aggregates = generate_aggregates(
-        pipeline, text, spacy_model, model_token_cleaner_function
+        pipeline, text, spacy_model, model_token_cleaner_function,
+        NER_masks=masks
     )
 
     token_exp_NER = []
-    for aggregate in tqdm(aggregates):
-        token_exp_NER += transform_aggregate_into_mapping(aggregate, return_clear_tokens)
-    return token_exp_NER
+    for doc_aggregate in tqdm(aggregates):
+        token_exp_NER_for_doc = []
+        for aggregate in doc_aggregate:
+            token_exp_NER_for_doc += transform_aggregate_into_mapping(aggregate, return_clear_tokens)
+        token_exp_NER.append(token_exp_NER_for_doc)
+
+    token_exp_NER_merged = [item for sublist in token_exp_NER for item in sublist]
+
+    return token_exp_NER_merged
+
+def generate_masks(
+    pipeline: TextClassificationPipeline,
+    text: list[str],
+    spacy_model: str = "en_core_web_sm",
+    model_token_cleaner_function=clear_tokens_from_model,
+    return_clear_tokens: bool = False,
+    ners_to_calculate_ablation: list[str] = None):
+
+    aggregates = generate_aggregates(
+        pipeline, text, spacy_model, model_token_cleaner_function,evaluate=False)
+        
+    token_exp_NER = []
+    for doc_aggregate in tqdm(aggregates):
+        token_exp_NER_for_doc = []
+        for aggregate in doc_aggregate:
+            token_exp_NER_for_doc += transform_aggregate_into_mapping(aggregate, return_clear_tokens)
+        token_exp_NER.append(token_exp_NER_for_doc)
+
+    masks = from_aggregate_list_create_mask(ners_to_calculate_ablation,token_exp_NER)
+
+    return masks
+    
+
+def from_aggregate_list_create_mask(ners_to_calculate_ablation: list[str],token_exp_NER: list[list[tuple[str, int, str]]]):
+    masks = []
+    for doc_token_exp_NER in token_exp_NER:
+        mask_for_doc = []
+        for (token,exp,NER) in doc_token_exp_NER:
+            if NER in ners_to_calculate_ablation:
+                mask_for_doc.append(1)
+            else:
+                mask_for_doc.append(0)
+        masks.append(mask_for_doc)
+    return masks
 
 
 def generate_aggregates(
@@ -39,7 +85,9 @@ def generate_aggregates(
     text: list[str],
     spacy_model: str = "en_core_web_sm",
     model_token_cleaner_function=clear_tokens_from_model,
-) -> list[TokenAggregate]:
+    evaluate = True,
+    NER_masks = None,
+) -> list[list[TokenAggregate]]:
 
     def forward(obs):
         return pipeline.model(obs).logits
@@ -63,10 +111,17 @@ def generate_aggregates(
         model_tokens_for_texts.append(tokens)
 
     exps = []
-    for tensor in tensors_for_attributions:
-        exps.append(attr.get_attributions([tensor]))
+    for i,tensor in enumerate(tensors_for_attributions):
+        if(evaluate):
+            if(NER_masks):
+                mask = NER_masks[i]
+                exps.append(attr.get_grouped_attribution([tensor],[torch.tensor([0]+mask+[0])]))
+            else:
+              exps.append(attr.get_attributions([tensor]))  
+        else:
+            exps.append([torch.zeros_like(tensor)])
 
-    all_aggregates: list[TokenAggregate] = []
+    all_aggregates: list[list[TokenAggregate]] = []
     for id, doc in enumerate(docs):
         tokens = model_tokens_for_texts[id]
         tokens_clear = model_token_cleaner_function(tokens)
@@ -74,7 +129,7 @@ def generate_aggregates(
             doc, exps[id][PREDICTED_CLASS], tokens_clear, tokens
         )
         if spacy_token_to_our_tokens is not False:
-            all_aggregates = all_aggregates + spacy_token_to_our_tokens
+            all_aggregates.append(spacy_token_to_our_tokens)
 
     return all_aggregates
 
