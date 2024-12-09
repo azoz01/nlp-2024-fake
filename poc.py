@@ -40,9 +40,7 @@ def compute_metrics(eval_pred):
 
 
 config = AutoConfig.from_pretrained(MODEL_ID)
-model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_ID, config=config
-)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_ID, config=config)
 timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 training_args = TrainingArguments(
     output_dir=f"output/{timestamp}",
