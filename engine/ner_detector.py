@@ -14,6 +14,9 @@ def clear_tokens_from_model(tokens: list[str]) -> list[str]:
     tokens_clear = tokens_clear[1 : len(tokens_clear) - 1]
     return tokens_clear
 
+def text_preprocess(text: list[str]) -> list[str]:
+    return [s.strip() for s in text]
+
 
 def tokenize_evaluate_and_detect_NERs(
     pipeline: TextClassificationPipeline,
@@ -24,9 +27,10 @@ def tokenize_evaluate_and_detect_NERs(
     ners_to_calculate_ablation: list[str] = None
 ) -> list[tuple[str, int, str]]:
     # token, exp , Ner type
+    text = text_preprocess(text)
     masks = None
     if ners_to_calculate_ablation:
-        masks = generate_masks(pipeline,text,spacy_model,model_token_cleaner_function,clear_tokens_from_model,ners_to_calculate_ablation=ners_to_calculate_ablation)
+        masks = generate_masks(pipeline,text,spacy_model,model_token_cleaner_function, ners_to_calculate_ablation=ners_to_calculate_ablation)
 
     aggregates = generate_aggregates(
         pipeline, text, spacy_model, model_token_cleaner_function,
@@ -115,7 +119,11 @@ def generate_aggregates(
         if(evaluate):
             if(NER_masks):
                 mask = NER_masks[i]
-                exps.append(attr.get_grouped_attribution([tensor],[torch.tensor([0]+mask+[0])]))
+                try:
+                    exps.append(attr.get_grouped_attribution([tensor],[torch.tensor([0]+mask+[0])]))
+                except:
+                    print(i)
+                    print(text[i])
             else:
               exps.append(attr.get_attributions([tensor]))  
         else:
