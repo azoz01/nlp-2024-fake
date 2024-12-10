@@ -35,8 +35,8 @@ class FeatureAblationText:
         self, obs: list[any], masks: list[Tensor]
     ) -> Tensor:
         obs = self.preprocessing_fn(obs)
-        exps = [None for _ in range(len(obs))]
+        exps = []
         for ob, mask in zip(obs, masks):
             exp = self.attr.attribute(ob, feature_mask=mask)
             exps.append(exp)
-        return torch.vstack(exps)
+        return torch.stack(exps)
