@@ -37,11 +37,19 @@ def text_preprocess(text: list[str]) -> list[str]:
     text = [s.replace(chr(241), "n") for s in text]
     text = [s.replace(chr(65279), "") for s in text]
     #weird white signs
+    text = [s.replace(chr(212), "'") for s in text]
+    text = [s.replace(chr(213), "'") for s in text]
+    text = [s.replace('É', " ") for s in text]
+    text = [s.replace('Ñ', " ") for s in text]
     text = [s.replace('Ò', " ") for s in text]
     text = [s.replace('Ó', " ") for s in text] 
     text = [s.replace('Õ', "'") for s in text]
     #'\xa0' case
     text = [s.replace(chr(160), " ") for s in text]
+    text = [s.replace(chr(8203), " ") for s in text]
+    #tm
+    
+    text = [s.replace(chr(8482), " tm ") for s in text]
     #multiple spaces
     text = [re.sub(r'\s+', ' ', s) for s in text]
 
