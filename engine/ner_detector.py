@@ -1,8 +1,10 @@
+import re
+
 import spacy
 import torch
-import re
 from tqdm import tqdm
 from transformers import TextClassificationPipeline
+
 from engine.tokens_aggregate import TokenAggregate
 from engine.xai import FeatureAblationText
 
@@ -15,6 +17,7 @@ def clear_tokens_from_model(tokens: list[str]) -> list[str]:
     tokens_clear = tokens_clear[1 : len(tokens_clear) - 1]
     return tokens_clear
 
+
 def text_preprocess(text: list[str]) -> list[str]:
     # ` to '
     text = [s.replace(chr(8216), chr(39)) for s in text]
@@ -25,8 +28,8 @@ def text_preprocess(text: list[str]) -> list[str]:
     text = [s.replace(chr(8243), chr(34)) for s in text]
     text = [s.replace(chr(8242), chr(34)) for s in text]
     # -
-    text = [s.replace(chr(8211), '-') for s in text]
-    text = [s.replace(chr(8212), '-') for s in text]
+    text = [s.replace(chr(8211), "-") for s in text]
+    text = [s.replace(chr(8212), "-") for s in text]
     # change triple dot in one char to three dots
     text = [s.replace(chr(8230), "...") for s in text]
     # delete french
@@ -36,22 +39,22 @@ def text_preprocess(text: list[str]) -> list[str]:
     text = [s.replace(chr(225), "a") for s in text]
     text = [s.replace(chr(241), "n") for s in text]
     text = [s.replace(chr(65279), "") for s in text]
-    #weird white signs
+    # weird white signs
     text = [s.replace(chr(212), "'") for s in text]
     text = [s.replace(chr(213), "'") for s in text]
-    text = [s.replace('É', " ") for s in text]
-    text = [s.replace('Ñ', " ") for s in text]
-    text = [s.replace('Ò', " ") for s in text]
-    text = [s.replace('Ó', " ") for s in text] 
-    text = [s.replace('Õ', "'") for s in text]
+    text = [s.replace("É", " ") for s in text]
+    text = [s.replace("Ñ", " ") for s in text]
+    text = [s.replace("Ò", " ") for s in text]
+    text = [s.replace("Ó", " ") for s in text]
+    text = [s.replace("Õ", "'") for s in text]
     #'\xa0' case
     text = [s.replace(chr(160), " ") for s in text]
     text = [s.replace(chr(8203), " ") for s in text]
-    #tm
-    
+    # tm
+
     text = [s.replace(chr(8482), " tm ") for s in text]
-    #multiple spaces
-    text = [re.sub(r'\s+', ' ', s) for s in text]
+    # multiple spaces
+    text = [re.sub(r"\s+", " ", s) for s in text]
 
     return [s.strip() for s in text]
 
@@ -62,29 +65,43 @@ def tokenize_evaluate_and_detect_NERs(
     spacy_model: str = "en_core_web_sm",
     model_token_cleaner_function=clear_tokens_from_model,
     return_clear_tokens: bool = False,
-    ners_to_calculate_ablation: list[str] = None
+    ners_to_calculate_ablation: list[str] = None,
 ) -> list[tuple[str, int, str]]:
     # token, exp , Ner type
     text = text_preprocess(text)
     masks = None
     if ners_to_calculate_ablation:
-        masks = generate_masks(pipeline,text,spacy_model,model_token_cleaner_function, ners_to_calculate_ablation=ners_to_calculate_ablation)
+        masks = generate_masks(
+            pipeline,
+            text,
+            spacy_model,
+            model_token_cleaner_function,
+            ners_to_calculate_ablation=ners_to_calculate_ablation,
+        )
 
     aggregates = generate_aggregates(
-        pipeline, text, spacy_model, model_token_cleaner_function,
-        NER_masks=masks
+        pipeline,
+        text,
+        spacy_model,
+        model_token_cleaner_function,
+        NER_masks=masks,
     )
 
     token_exp_NER = []
     for doc_aggregate in tqdm(aggregates):
         token_exp_NER_for_doc = []
         for aggregate in doc_aggregate:
-            token_exp_NER_for_doc += transform_aggregate_into_mapping(aggregate, return_clear_tokens)
+            token_exp_NER_for_doc += transform_aggregate_into_mapping(
+                aggregate, return_clear_tokens
+            )
         token_exp_NER.append(token_exp_NER_for_doc)
 
-    token_exp_NER_merged = [item for sublist in token_exp_NER for item in sublist]
+    token_exp_NER_merged = [
+        item for sublist in token_exp_NER for item in sublist
+    ]
 
     return token_exp_NER_merged
+
 
 def generate_masks(
     pipeline: TextClassificationPipeline,
@@ -92,28 +109,41 @@ def generate_masks(
     spacy_model: str = "en_core_web_sm",
     model_token_cleaner_function=clear_tokens_from_model,
     return_clear_tokens: bool = False,
-    ners_to_calculate_ablation: list[str] = None):
+    ners_to_calculate_ablation: list[str] = None,
+):
 
     aggregates = generate_aggregates(
-        pipeline, text, spacy_model, model_token_cleaner_function,evaluate=False)
-        
+        pipeline,
+        text,
+        spacy_model,
+        model_token_cleaner_function,
+        evaluate=False,
+    )
+
     token_exp_NER = []
     for doc_aggregate in tqdm(aggregates):
         token_exp_NER_for_doc = []
         for aggregate in doc_aggregate:
-            token_exp_NER_for_doc += transform_aggregate_into_mapping(aggregate, return_clear_tokens)
+            token_exp_NER_for_doc += transform_aggregate_into_mapping(
+                aggregate, return_clear_tokens
+            )
         token_exp_NER.append(token_exp_NER_for_doc)
 
-    masks = from_aggregate_list_create_mask(ners_to_calculate_ablation,token_exp_NER)
+    masks = from_aggregate_list_create_mask(
+        ners_to_calculate_ablation, token_exp_NER
+    )
 
     return masks
-    
 
-def from_aggregate_list_create_mask(ners_to_calculate_ablation: list[str],token_exp_NER: list[list[tuple[str, int, str]]]):
+
+def from_aggregate_list_create_mask(
+    ners_to_calculate_ablation: list[str],
+    token_exp_NER: list[list[tuple[str, int, str]]],
+):
     masks = []
     for doc_token_exp_NER in token_exp_NER:
         mask_for_doc = []
-        for (token,exp,NER) in doc_token_exp_NER:
+        for token, exp, NER in doc_token_exp_NER:
             if NER in ners_to_calculate_ablation:
                 mask_for_doc.append(1)
             else:
@@ -127,8 +157,8 @@ def generate_aggregates(
     text: list[str],
     spacy_model: str = "en_core_web_sm",
     model_token_cleaner_function=clear_tokens_from_model,
-    evaluate = True,
-    NER_masks = None,
+    evaluate=True,
+    NER_masks=None,
 ) -> list[list[TokenAggregate]]:
 
     def forward(obs):
@@ -153,20 +183,24 @@ def generate_aggregates(
         model_tokens_for_texts.append(tokens)
 
     exps = []
-    for i,tensor in tqdm(enumerate(tensors_for_attributions)):
-        if(evaluate):
-            if(NER_masks):
+    for i, tensor in tqdm(enumerate(tensors_for_attributions)):
+        if evaluate:
+            if NER_masks:
                 mask = NER_masks[i]
                 try:
-                    exps.append(attr.get_grouped_attribution([tensor],[torch.tensor([0]+mask+[0])]))
+                    exps.append(
+                        attr.get_grouped_attribution(
+                            [tensor], [torch.tensor([0] + mask + [0])]
+                        )
+                    )
                 except Exception as e:
                     print(f"An exception occurred: {e}")
                     print(f"something went wring {i} \n")
-                    print([0]+mask+[0])
+                    print([0] + mask + [0])
                     print(tensor)
                     print(text[i])
             else:
-              exps.append(attr.get_attributions([tensor]))  
+                exps.append(attr.get_attributions([tensor]))
         else:
             exps.append([torch.zeros_like(tensor)])
 
