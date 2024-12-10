@@ -1,5 +1,6 @@
 import spacy
 import torch
+import re
 from tqdm import tqdm
 from transformers import TextClassificationPipeline
 from engine.tokens_aggregate import TokenAggregate
@@ -15,6 +16,35 @@ def clear_tokens_from_model(tokens: list[str]) -> list[str]:
     return tokens_clear
 
 def text_preprocess(text: list[str]) -> list[str]:
+    # ` to '
+    text = [s.replace(chr(8216), chr(39)) for s in text]
+    text = [s.replace(chr(8217), chr(39)) for s in text]
+    # weird quote
+    text = [s.replace(chr(8220), chr(34)) for s in text]
+    text = [s.replace(chr(8221), chr(34)) for s in text]
+    text = [s.replace(chr(8243), chr(34)) for s in text]
+    text = [s.replace(chr(8242), chr(34)) for s in text]
+    # -
+    text = [s.replace(chr(8211), '-') for s in text]
+    text = [s.replace(chr(8212), '-') for s in text]
+    # change triple dot in one char to three dots
+    text = [s.replace(chr(8230), "...") for s in text]
+    # delete french
+    text = [s.replace(chr(233), "e") for s in text]
+    text = [s.replace(chr(235), "e") for s in text]
+    text = [s.replace(chr(224), "a") for s in text]
+    text = [s.replace(chr(225), "a") for s in text]
+    text = [s.replace(chr(241), "n") for s in text]
+    text = [s.replace(chr(65279), "") for s in text]
+    #weird white signs
+    text = [s.replace('Ò', " ") for s in text]
+    text = [s.replace('Ó', " ") for s in text] 
+    text = [s.replace('Õ', "'") for s in text]
+    #'\xa0' case
+    text = [s.replace(chr(160), " ") for s in text]
+    #multiple spaces
+    text = [re.sub(r'\s+', ' ', s) for s in text]
+
     return [s.strip() for s in text]
 
 
@@ -115,14 +145,17 @@ def generate_aggregates(
         model_tokens_for_texts.append(tokens)
 
     exps = []
-    for i,tensor in enumerate(tensors_for_attributions):
+    for i,tensor in tqdm(enumerate(tensors_for_attributions)):
         if(evaluate):
             if(NER_masks):
                 mask = NER_masks[i]
                 try:
                     exps.append(attr.get_grouped_attribution([tensor],[torch.tensor([0]+mask+[0])]))
-                except:
-                    print(i)
+                except Exception as e:
+                    print(f"An exception occurred: {e}")
+                    print(f"something went wring {i} \n")
+                    print([0]+mask+[0])
+                    print(tensor)
                     print(text[i])
             else:
               exps.append(attr.get_attributions([tensor]))  
@@ -138,6 +171,8 @@ def generate_aggregates(
         )
         if spacy_token_to_our_tokens is not False:
             all_aggregates.append(spacy_token_to_our_tokens)
+        else:
+            print(doc)
 
     return all_aggregates
 
