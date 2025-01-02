@@ -4,6 +4,9 @@
 
 * (AZ) provide all transformers (on org data + on data with swapped tokens) (if not already done)
 * (AZ) decide about using LLM
+* (AZ/MR) update in `README.md` instruction for the code
+    * (AZ) models and general setup
+    * (MR) all stuff you will do
 * (MR) implement counterfactuals heuristics based on the notebook `poc.ipynb`
     * assign for each person-token its attribution
     * for each observation, indentify person-tokens and the mdoel's prediction
