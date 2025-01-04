@@ -1,11 +1,14 @@
 # NLP project
 
+## Model training
+* Install dependencies - `pip install -r requirements.txt`
+* Download required spacy model - `python -m spacy download en_core_web_lg`
+* Training all models - `./train_models.sh` - **NOTE: Remove sampling before proper training**
+* Training output should be in `outptut` directory
+
 ## TODO
 
-* (AZ) provide all transformers (on org data + on data with swapped tokens) (if not already done)
-* (AZ) decide about using LLM
-* (AZ/MR) update in `README.md` instruction for the code
-    * (AZ) models and general setup
+* (MR) update in `README.md` instruction for the code
     * (MR) all stuff you will do
 * (MR) implement counterfactuals heuristics based on the notebook `poc.ipynb`
     * assign for each person-token its attribution
