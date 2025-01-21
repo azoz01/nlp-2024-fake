@@ -65,6 +65,7 @@ def tokenize_evaluate_and_detect_NERs(
     spacy_model: str = "en_core_web_sm",
     model_token_cleaner_function=clear_tokens_from_model,
     return_clear_tokens: bool = False,
+    return_mappings_for_each_text: bool = False,
     ners_to_calculate_ablation: list[str] = None,
 ) -> list[tuple[str, int, str]]:
     # token, exp , Ner type
@@ -96,11 +97,14 @@ def tokenize_evaluate_and_detect_NERs(
             )
         token_exp_NER.append(token_exp_NER_for_doc)
 
+    if return_mappings_for_each_text:
+        return token_exp_NER
+    
     token_exp_NER_merged = [
         item for sublist in token_exp_NER for item in sublist
     ]
-
     return token_exp_NER_merged
+    
 
 
 def generate_masks(
