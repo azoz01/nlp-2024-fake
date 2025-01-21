@@ -2,7 +2,7 @@
 
 set -e
 
-seeds=(1 2 3)
+seeds=(1)
 models=(roberta ernie)
 datasets=(liar coaid isot)
 masks=(yes no)

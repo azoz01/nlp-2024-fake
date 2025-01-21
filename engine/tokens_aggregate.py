@@ -25,8 +25,8 @@ class TokenAggregate:
             f"Our model dirty: {self.dirty_model_tokens}\n"
             f"model exp: {self.model_exp}\n"
         )
-    
-    def get_tokens(self, get_clear:bool = False) -> list[str]:
+
+    def get_tokens(self, get_clear: bool = False) -> list[str]:
         if get_clear:
             return self.clean_model_tokens
         else:
@@ -117,8 +117,8 @@ class TokenAggregate:
         # debug!!!
         if len(constructed_model_token):
             print(f"\n INVALID DOC!!! stopped")
-            print(constructed_spacy_token)
-            print(constructed_model_token)
+            print(f"{constructed_spacy_token=}")
+            print(f"{constructed_model_token=}")
             return False
 
         return spacy_token_to_our_tokens

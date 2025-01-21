@@ -14,6 +14,7 @@ PREDICTED_CLASS = 0
 
 def clear_tokens_from_model(tokens: list[str]) -> list[str]:
     tokens_clear = [s.replace("Ġ", "") for s in tokens]
+    tokens_clear = [s.replace("#", "") for s in tokens_clear]
     tokens_clear = tokens_clear[1 : len(tokens_clear) - 1]
     return tokens_clear
 
@@ -55,6 +56,9 @@ def text_preprocess(text: list[str]) -> list[str]:
     text = [s.replace(chr(8482), " tm ") for s in text]
     # multiple spaces
     text = [re.sub(r"\s+", " ", s) for s in text]
+
+    text = [s.replace("#", "") for s in text]
+    text = [s.lower() for s in text]
 
     return [s.strip() for s in text]
 
@@ -99,12 +103,11 @@ def tokenize_evaluate_and_detect_NERs(
 
     if return_mappings_for_each_text:
         return token_exp_NER
-    
+
     token_exp_NER_merged = [
         item for sublist in token_exp_NER for item in sublist
     ]
     return token_exp_NER_merged
-    
 
 
 def generate_masks(

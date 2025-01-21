@@ -21,7 +21,10 @@ from engine.replace_persons import replace_ner
 
 tqdm.pandas()
 
-MODEL_MAPPING = {"roberta": "roberta-base", "ernie": "nghuyong/ernie-2.0-base-en"}
+MODEL_MAPPING = {
+    "roberta": "roberta-base",
+    "ernie": "nghuyong/ernie-2.0-base-en",
+}
 
 
 def main():
@@ -30,15 +33,9 @@ def main():
 
     logger.info("Preparing data data")
     data_path = Path("data") / args.data
-    train_df = pd.read_csv(data_path / "train.csv").sample(
-        n=64
-    )  # TODO: remove sampling during final training
-    valid_df = pd.read_csv(data_path / "valid.csv").sample(
-        n=64
-    )  # TODO: remove sampling during final training
-    test_df = pd.read_csv(data_path / "test.csv").sample(
-        n=64
-    )  # TODO: remove sampling during final training
+    train_df = pd.read_csv(data_path / "train.csv")
+    valid_df = pd.read_csv(data_path / "valid.csv")
+    test_df = pd.read_csv(data_path / "test.csv")
 
     if args.mask == "yes":
         train_df["text_masked"] = train_df["text"].progress_apply(replace_ner)
@@ -49,7 +46,9 @@ def main():
     model_name = MODEL_MAPPING[args.model]
     config = AutoConfig.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=config)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_name, config=config
+    )
 
     logger.info("Starting fine-tuning")
     train_dataset = prepare_data_for_fine_tuning(train_df, tokenizer)
@@ -90,7 +89,11 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=valid_dataset,
         compute_metrics=compute_metrics,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=2, early_stopping_threshold=0.01)],
+        callbacks=[
+            EarlyStoppingCallback(
+                early_stopping_patience=2, early_stopping_threshold=0.01
+            )
+        ],
     )
 
     trainer.train()
