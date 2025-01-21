@@ -53,7 +53,7 @@ def text_preprocess(text: list[str]) -> list[str]:
     text = [s.replace(chr(160), " ") for s in text]
     text = [s.replace(chr(8203), " ") for s in text]
     # tm
-
+    text = [s.replace("Ġ", "") for s in text]
     text = [s.replace(chr(8482), " tm ") for s in text]
     # multiple spaces
     text = [re.sub(r"\s+", " ", s) for s in text]
