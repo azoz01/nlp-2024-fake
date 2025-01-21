@@ -58,9 +58,6 @@ def text_preprocess(text: list[str]) -> list[str]:
     # multiple spaces
     text = [re.sub(r"\s+", " ", s) for s in text]
 
-    text = [s.replace("#", "") for s in text]
-    text = [s.lower() for s in text]
-
     return [s.strip() for s in text]
 
 
