@@ -14,11 +14,13 @@ PREDICTED_CLASS = 0
 
 def clear_tokens_from_model(tokens: list[str]) -> list[str]:
     tokens_clear = [s.replace("Ġ", "") for s in tokens]
+    tokens_clear = [s.replace(r"##", "") for s in tokens]
     tokens_clear = tokens_clear[1 : len(tokens_clear) - 1]
     return tokens_clear
 
 
 def text_preprocess(text: list[str]) -> list[str]:
+    
     # ` to '
     text = [s.replace(chr(8216), chr(39)) for s in text]
     text = [s.replace(chr(8217), chr(39)) for s in text]
@@ -241,7 +243,7 @@ def find_NER_name_for_aggregate(NERs: list[str]) -> str:
     if not unique_NERs:
         return NO_NER_SYMBOL
     elif len(unique_NERs) != 1:
-        print(f"EHHH BAD ASU MOTINS: {unique_NERs}")
+        print(f"EHHH BAD ASUMOTINS: {unique_NERs}")
     return unique_NERs.pop()
 
 

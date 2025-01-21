@@ -38,6 +38,7 @@ class TokenAggregate:
         exp_tensor: Tensor,
         tokens_clear: list[str],
         tokens_dirty: list[str],
+        ignore_upper_lower_case: bool = True,
     ):
 
         spacy_token_to_our_tokens = []
@@ -95,7 +96,12 @@ class TokenAggregate:
                 )
                 current_spacy_token_id += 1
 
-            if constructed_model_token == constructed_spacy_token:
+            if not ignore_upper_lower_case:
+                tokens_are_matching = constructed_model_token == constructed_spacy_token
+            else:
+                tokens_are_matching = constructed_model_token.lower() == constructed_spacy_token.lower()
+            
+            if tokens_are_matching:
 
                 new_aggregate = TokenAggregate(
                     spacy_token_to_current_model_tokens,
