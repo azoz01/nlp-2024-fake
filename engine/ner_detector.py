@@ -58,6 +58,9 @@ def text_preprocess(text: list[str]) -> list[str]:
     # multiple spaces
     text = [re.sub(r"\s+", " ", s) for s in text]
 
+    text = [s.replace("#", "") for s in text]
+    text = [s.lower() for s in text]
+
     return [s.strip() for s in text]
 
 
@@ -101,12 +104,11 @@ def tokenize_evaluate_and_detect_NERs(
 
     if return_mappings_for_each_text:
         return token_exp_NER
-    
+
     token_exp_NER_merged = [
         item for sublist in token_exp_NER for item in sublist
     ]
     return token_exp_NER_merged
-    
 
 
 def generate_masks(
