@@ -1,25 +1,19 @@
-from engine.ner_detector import tokenize_evaluate_and_detect_NERs
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
     AutoConfig,
     TextClassificationPipeline,
 )
-import pickle
-import seaborn as sns
 import numpy as np
-from typing import Any
-from engine.data import prepare_data_for_fine_tuning, read_data
-import torch
 import pandas as pd
-import random
-import re
-import copy
 import spacy
 from pathlib import Path
 
+from .data import prepare_data_for_fine_tuning
+from .ner_detector import tokenize_evaluate_and_detect_NERs
 
-def get_training_data(models_path, parse_accuracies = False):
+
+def get_training_data(models_path, parse_accuracies=False):
     all_files = [path for path in models_path.rglob("model_final/model.safetensors")]
     
     models = [(path.parts[2], path.parts[1], path.parts[3], path.parts[4]) for path in all_files]
@@ -88,14 +82,12 @@ def get_map_person_importance(res):
             if ent.label_ == "PERSON":
                 is_ok = True
                 break
-        
         if is_ok:
             new_persons[key.lower()] = np.mean(persons_unique[key])
-        
     return new_persons
 
 
-def get_top_persons(persons_unique, negative = False, n = 5):
+def get_top_persons(persons_unique, negative=False, n=5):
     importance = list(persons_unique.values())
     persons = list(persons_unique.keys())
     importance = np.array(importance)
@@ -113,7 +105,6 @@ def pipeline_out_to_vec(pipeline_out):
             preds.append(out[0]['score'])
         else:
             preds.append(out[1]['score'])
-            
     return preds
 
 
@@ -132,11 +123,11 @@ def convert_prediction(pred):
         return pred[1]["score"]
 
 
-def process_models(models_df):
+def process_models(models_df, device="cpu"):
     results = {}
     results_misc = {}
 
-    for _, row in model_df.iterrows():
+    for _, row in models_df.iterrows():
         
         results_misc['-'.join([row["dataset"], row["model"], row["training_type"]])] = {}
         
@@ -156,26 +147,25 @@ def process_models(models_df):
             model=model, tokenizer=tokenizer, top_k=2, device=device
         )
 
-        if(device == "cuda"):
+        if (device == "cuda"):
             model.cuda()
         else:
             model.cpu()
-            
+
         ratios = get_person_relative_importance(pipeline, test_dataset)
         results_misc['-'.join([row["dataset"], row["model"], row["training_type"]])]['ratios'] = ratios
-        
-        
+
         res = tokenize_evaluate_and_detect_NERs(pipeline, 
                                     test_dataset['text'], 
                                     spacy_model="en_core_web_lg")
-        
+
         person_importance_mapping = get_map_person_importance(res)
         top_positive_persons = get_top_persons(person_importance_mapping, negative=False, n=10)
         top_negative_persons = get_top_persons(person_importance_mapping, negative=True, n=10)
-        
+
         orig_pred = pipeline_out_to_vec(pipeline(test_dataset["text"]))
         preds = orig_pred
-        
+
         replacements = []
         test_counterfactuals = test_dataset.to_pandas().copy()
 
@@ -191,10 +181,8 @@ def process_models(models_df):
             test_counterfactuals.loc[ix, ["text"]] = text.lower().replace(person_to_remove, person_to_add)
             
             replacements.append((person_to_remove, person_to_add))
-                
-        
+
         adv_pred = pipeline_out_to_vec(pipeline(test_counterfactuals["text"].to_list()))
-        
-        
+
         results['-'.join([row["dataset"], row["model"], row["training_type"]])] = {"orig_pred": orig_pred, "adv_pred": adv_pred, "replacements": replacements}
     return results, results_misc
