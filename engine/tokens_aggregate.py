@@ -75,7 +75,9 @@ class TokenAggregate:
 
             if len(constructed_model_token) < len(constructed_spacy_token):
 
-                constructed_model_token += tokens_clear[current_clear_token_id].strip("Ġ")
+                constructed_model_token += tokens_clear[
+                    current_clear_token_id
+                ].strip("Ġ")
                 clean_tokens_for_current_spacy_tokens.append(
                     tokens_clear[current_clear_token_id].strip("Ġ")
                 )
@@ -97,10 +99,15 @@ class TokenAggregate:
                 current_spacy_token_id += 1
 
             if not ignore_upper_lower_case:
-                tokens_are_matching = constructed_model_token == constructed_spacy_token
+                tokens_are_matching = (
+                    constructed_model_token == constructed_spacy_token
+                )
             else:
-                tokens_are_matching = constructed_model_token.lower() == constructed_spacy_token.lower()
-            
+                tokens_are_matching = (
+                    constructed_model_token.lower()
+                    == constructed_spacy_token.lower()
+                )
+
             if tokens_are_matching:
 
                 new_aggregate = TokenAggregate(
@@ -122,7 +129,7 @@ class TokenAggregate:
 
         # debug!!!
         if len(constructed_model_token):
-            print(f"\n INVALID DOC!!! stopped")
+            print(f"\n Invalid output, proccess stopped")
             print(f"{constructed_spacy_token=}")
             print(f"{constructed_model_token=}")
             return False

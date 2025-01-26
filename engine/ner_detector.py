@@ -20,7 +20,7 @@ def clear_tokens_from_model(tokens: list[str]) -> list[str]:
 
 
 def text_preprocess(text: list[str]) -> list[str]:
-    
+
     # ` to '
     text = [s.replace(chr(8216), chr(39)) for s in text]
     text = [s.replace(chr(8217), chr(39)) for s in text]
@@ -200,7 +200,7 @@ def generate_aggregates(
                     )
                 except Exception as e:
                     print(f"An exception occurred: {e}")
-                    print(f"something went wring {i} \n")
+                    print(f"error on row {i} \n")
                     print([0] + mask + [0])
                     print(tensor)
                     print(text[i])
@@ -242,7 +242,7 @@ def find_NER_name_for_aggregate(NERs: list[str]) -> str:
     if not unique_NERs:
         return NO_NER_SYMBOL
     elif len(unique_NERs) != 1:
-        print(f"EHHH BAD ASUMOTINS: {unique_NERs}")
+        print(f"Eror: {unique_NERs}")
     return unique_NERs.pop()
 
 
